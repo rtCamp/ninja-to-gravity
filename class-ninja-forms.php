@@ -31,7 +31,7 @@ class Ninja_Forms {
 	 */
 	public static function get_forms() {
 
-		$forms = array();
+		$forms = [];
 
 		if ( ! function_exists( 'Ninja_Forms' ) ) {
 			return [];
@@ -93,7 +93,7 @@ class Ninja_Forms {
 	 */
 	public static function convert_to_gravity_form( $form_export ) {
 
-		$gravity_form = array();
+		$gravity_form = [];
 
 		$gravity_form['title'] = $form_export['settings']['title'];
 
@@ -157,10 +157,28 @@ class Ninja_Forms {
 				continue;
 			}
 
-			$arguments = array(
+			if ( 'submit' === $type ) {
+				$gravity_form['button'] = [
+					'type'     => 'text',
+					'text'     => $nf_field['label'],
+					'imageUrl' => '',
+				];
+				continue;
+			}
+			
+			$css_classes = [
+				sprintf( '%s-field', $type ),
+			];
+
+			$arguments = [
 				'type'                 => $type,
 				'layoutGridColumnSpan' => $spans[ $nf_field['key'] ],
-			);
+				'id'                   => $order,
+				'isRequired'           => ( '1' === ( $nf_field['required'] ?? '' ) ),
+				'placeholder'          => $nf_field['placeholder'] ?? '',
+				'cssClass'             => implode( ' ', $css_classes ),
+			];
+			
 			
 			if ( 'section' !== $type ) {
 				$arguments['label'] = $nf_field['label'];
@@ -173,22 +191,8 @@ class Ninja_Forms {
 			if ( 'html' === $type ) {
 				$arguments['content'] = $nf_field['default'];
 			}
-			
-			if ( 'submit' === $type ) {
-				$gravity_form['button'] = [
-					'type'     => 'text',
-					'text'     => $nf_field['label'],
-					'imageUrl' => '',
-				];
-				continue;
-			}
 
 			$default = $nf_field['default'] ?? '';
-
-			$arguments['id'] = $order;
-
-			$arguments['isRequired']  = '1' === ( $nf_field['required'] ?? '' );
-			$arguments['placeholder'] = $nf_field['placeholder'] ?? '';
 
 			if ( false !== strpos( $default, '{querystring:' ) ) {
 				$default = str_replace( [ '{querystring:', '}' ], '', $default );
@@ -345,7 +349,7 @@ class Ninja_Forms {
 	 */
 	public static function field_mapping( $nf_field = null ) {
 
-		$mapping = array(
+		$mapping = [
 			'address'         => 'text',
 			'address2'        => 'text',
 			'button'          => null,
@@ -386,7 +390,7 @@ class Ninja_Forms {
 			'unknown'         => null,
 			'zip'             => 'text',
 			'hr'              => 'section',
-		);
+		];
 
 		if ( empty( $nf_field ) ) {
 			return $mapping;

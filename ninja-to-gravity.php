@@ -149,7 +149,7 @@ function add_ninja_form_option() {
 								</th>
 								<td>
 									<select name="gf_import_id" id="gf_import_id">
-										<option value="" selected disabled><?php esc_html__( 'Select a form', 'ninja-to-gravity' ); ?></option>
+										<option value="" selected disabled><?php echo esc_html__( 'Select a form', 'ninja-to-gravity' ); ?></option>
 										<?php foreach ( $ninja_forms as $form ) : ?>
 											<option value="<?php echo esc_attr( $form->get_id() ); ?>"><?php echo esc_html( $form->get_setting( 'title' ) ); ?></option>
 										<?php endforeach; ?>
