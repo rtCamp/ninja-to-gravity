@@ -57,7 +57,7 @@ class Ninja_Forms {
 			return false;
 		}
 
-		$nff = wpcom_vip_file_get_contents( $file );
+		$nff = file_get_contents( $file ); // phpcs:ignore
 
 		if ( empty( $nff ) ) {
 			return false;
@@ -97,20 +97,27 @@ class Ninja_Forms {
 
 		$gravity_form['title'] = $form_export['settings']['title'];
 
-		$defaults = [];
-		foreach ( $form_export['settings']['conditions'] as $condition ) {
+		$defaults   = [];
+		$conditions = $form_export['settings']['conditions'] ?? [];
+		foreach ( $conditions as $condition ) {
 			if ( self::can_condition_be_converted_to_default_value( $condition ) ) {
 				$defaults[ $condition['when'][0]['key'] ] = $condition['then'][0]['value'];
 			}
 		}
 
-		$order = 0;
-		$list  = [];
+		$order     = 0;
+		$page_data = []; // Stores the index of first item in a page and the page title.
+		$spans     = []; // Calculate width of each field.
 		foreach ( $form_export['settings']['formContentData'] as $content_data ) {
-			$list [ $order ] = $content_data['title'];
-			$count           = 0;
-			foreach ( $content_data['formContentData'] as $row ) {
-				foreach ( $row['cells'] as $cell ) {
+			$page_data [ $order ] = $content_data['title'];
+			$count                = 0;
+			foreach ( $content_data['formContentData'] as $row ) { // Row.
+				foreach ( $row['cells'] as $cell ) { // Column.
+					$percent_width = intval( $cell['width'] );
+					$column_width  = round( $percent_width / 100.0 * 12 );
+					foreach ( $cell['fields'] as $field ) { // Individual field.
+						$spans[ $field ] = $column_width;
+					}
 					$count += count( $cell['fields'] );
 				}
 			}
@@ -119,7 +126,7 @@ class Ninja_Forms {
 
 		foreach ( $form_export['fields'] as $order => $nf_field ) {
 
-			if ( 1 < count( $list ) && in_array( $order, array_keys( $list ) ) ) { // More than 1 parts, means it's a multi step form.
+			if ( 1 < count( $page_data ) && in_array( $order, array_keys( $page_data ) ) ) { // More than 1 parts, means it's a multi step form.
 				if ( 0 !== $order ) {
 					$arguments = [
 						'type' => 'page',
@@ -132,7 +139,7 @@ class Ninja_Forms {
 				
 				$arguments = [
 					'type'  => 'section',
-					'label' => $list[ $order ],
+					'label' => $page_data[ $order ],
 				];
 
 				$gf_field = \GF_Fields::create( $arguments );
@@ -151,7 +158,8 @@ class Ninja_Forms {
 			}
 
 			$arguments = array(
-				'type' => $type,
+				'type'                 => $type,
+				'layoutGridColumnSpan' => $spans[ $nf_field['key'] ],
 			);
 			
 			if ( 'section' !== $type ) {
@@ -178,11 +186,11 @@ class Ninja_Forms {
 			$default = $nf_field['default'] ?? '';
 
 			$arguments['id'] = $order;
-			
+
 			$arguments['isRequired']  = '1' === ( $nf_field['required'] ?? '' );
 			$arguments['placeholder'] = $nf_field['placeholder'] ?? '';
 
-			if ( str_contains( $default, '{querystring:' ) ) {
+			if ( false !== strpos( $default, '{querystring:' ) ) {
 				$default = str_replace( [ '{querystring:', '}' ], '', $default );
 				
 				$arguments['allowsPrepopulate'] = true;
@@ -401,7 +409,7 @@ class Ninja_Forms {
 	 */
 	public static function convert_merge_tags( $text ) {
 
-		while ( str_contains( $text, '{field:' ) ) {
+		while ( false !== strpos( $text, '{field:' ) ) {
 			$start_index = strpos( $text, '{field:', 0 ) + strlen( '{field:' );
 			$end_index   = strpos( $text, '}', $start_index );
 			$field_name  = substr( $text, $start_index, $end_index - $start_index );

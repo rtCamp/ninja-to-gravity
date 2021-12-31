@@ -66,7 +66,7 @@ function add_ninja_form_option() {
 			$count = 0;
 
 			$forms        = array();
-			$import_files = array_map( 'sanitize_file_name', $_FILES['gf_import_file']['tmp_name'] );
+			$import_files = $_FILES['gf_import_file']['tmp_name']; // phpcs:ignore
 			
 			// Loop through each uploaded file.
 			foreach ( $import_files as $import_file ) {
@@ -149,6 +149,7 @@ function add_ninja_form_option() {
 								</th>
 								<td>
 									<select name="gf_import_id" id="gf_import_id">
+										<option value="" selected disabled><?php esc_html__( 'Select a form', 'ninja-to-gravity' ); ?></option>
 										<?php foreach ( $ninja_forms as $form ) : ?>
 											<option value="<?php echo esc_attr( $form->get_id() ); ?>"><?php echo esc_html( $form->get_setting( 'title' ) ); ?></option>
 										<?php endforeach; ?>
