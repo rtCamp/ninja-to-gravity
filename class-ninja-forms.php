@@ -170,11 +170,13 @@ class Ninja_Forms {
 				sprintf( '%s-field', $type ),
 			];
 
+			$isRequired = $nf_field['required'] ?? '';
+
 			$arguments = [
 				'type'                 => $type,
 				'layoutGridColumnSpan' => $spans[ $nf_field['key'] ],
-				'id'                   => $order,
-				'isRequired'           => ( '1' === ( $nf_field['required'] ?? '' ) ),
+				'id'                   => ( $order + 1 ),
+				'isRequired'           => ( '1' === $isRequired || 1 === $isRequired ),
 				'placeholder'          => $nf_field['placeholder'] ?? '',
 				'cssClass'             => implode( ' ', $css_classes ),
 			];
@@ -187,7 +189,7 @@ class Ninja_Forms {
 			if ( in_array( $type, [ 'checkbox', 'select', 'multiselect', 'radio' ] ) ) {
 				$arguments = self::process_options( $nf_field, $arguments );
 			}
-			
+
 			if ( 'html' === $type ) {
 				$arguments['content'] = $nf_field['default'];
 			}
@@ -313,6 +315,8 @@ class Ninja_Forms {
 	 */
 	public static function process_options( $field, $arguments ) {
 		$options       = $field['options'] ?? [];
+		$field_id      = $arguments['id'];
+
 		$new_arguments = [];
 		if ( ! empty( $options ) ) {
 			$choices = [];
@@ -328,8 +332,8 @@ class Ninja_Forms {
 			}
 			$new_arguments['choices'] = $choices;
 		} else {
-			$new_arguments['label']   = '';
-			$new_arguments['choices'] = [
+			$new_arguments['labelPlacement'] = 'hidden_label';
+			$new_arguments['choices']        = [
 				[
 					'text'       => $field['label'],
 					'value'      => $field['key'],
@@ -337,6 +341,24 @@ class Ninja_Forms {
 				],
 			];
 		}
+
+		// Set inputs key if the field is checkbox.
+		if ( 'checkbox' === $arguments['type'] ) {
+			$inputs = [];
+			foreach ( $new_arguments['choices'] as $index => $choice ) {
+				array_push(
+					$inputs,
+					[
+						'id'    => $field_id . '.' . ( $index + 1 ),
+						'label' => $choice['text'],
+						'name'  => '',
+					]
+				);
+			}
+			$new_arguments['inputs']            = $inputs;
+			$new_arguments['enableChoiceValue'] = true;
+		}
+
 		return array_merge( $arguments, $new_arguments );
 	}
 
