@@ -231,7 +231,7 @@ class Ninja_Forms {
 					'id'   => wp_generate_uuid4(),
 					'name' => $action['label'],
 					'type' => 'redirect',
-					'url'  => $action['redirect_url'],
+					'url'  => self::maybe_prepend_base_url( $action['redirect_url'] ),
 				];
 			} elseif ( 'email' === $action['type'] ) {
 				$from_address = ! empty( $action['from_address'] ) ? $action['from_address'] : '{admin_email}';
@@ -303,6 +303,24 @@ class Ninja_Forms {
 
 		return $form_id;
 
+	}
+
+	/**
+	 * If the URL is relative, then the full permalink will be fetched and returned, 
+	 * external links will be returned as is.
+	 * 
+	 * @param string $link The link to be validated.
+	 * 
+	 * @return string the modified link.
+	 */
+	public static function maybe_prepend_base_url( $link ) {
+		if ( 0 === strpos( $link, '/' ) ) {
+			$post = get_page_by_path( $link, OBJECT, [ 'post', 'page' ] ); // phpcs:ignore
+			if ( false !== $post ) {
+				return get_permalink( $post );
+			}
+		}
+		return $link;
 	}
 
 	/**
