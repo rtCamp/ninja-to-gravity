@@ -170,17 +170,21 @@ class Ninja_Forms {
 				sprintf( '%s-field', $type ),
 			];
 
-			$isRequired = $nf_field['required'] ?? '';
+			$is_required = $nf_field['required'] ?? '';
+			
+			if ( 'zip_1553629856503' === $nf_field['key'] ) {
+				$gravity_form['form_enable_qid_lookup'] = '1';
+				array_push( $css_classes, 'lookupselector' );
+			}
 
 			$arguments = [
 				'type'                 => $type,
 				'layoutGridColumnSpan' => $spans[ $nf_field['key'] ],
 				'id'                   => ( $order + 1 ),
-				'isRequired'           => ( '1' === $isRequired || 1 === $isRequired ),
+				'isRequired'           => ( '1' === $is_required || 1 === $is_required ),
 				'placeholder'          => $nf_field['placeholder'] ?? '',
 				'cssClass'             => implode( ' ', $css_classes ),
 			];
-			
 			
 			if ( 'section' !== $type ) {
 				$arguments['label'] = $nf_field['label'];
@@ -334,8 +338,8 @@ class Ninja_Forms {
 	public static function process_options( $field, $arguments ) {
 		$options       = $field['options'] ?? [];
 		$field_id      = $arguments['id'];
-
 		$new_arguments = [];
+
 		if ( ! empty( $options ) ) {
 			$choices = [];
 			foreach ( $options as $option ) {
