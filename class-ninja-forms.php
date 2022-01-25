@@ -85,6 +85,34 @@ class Ninja_Forms {
 	} 
 
 	/**
+	 * Calculate the widths of all the fields in the form.
+	 * 
+	 * @param array $form_export The form data.
+	 * 
+	 * @return array The mapping from field ID to the width.
+	 */
+	public static function calculate_field_widths( $form_export ) {
+		$order = 0;
+		$spans = [];
+		foreach ( $form_export['settings']['formContentData'] as $content_data ) {
+			$page_data[ $order ] = $content_data['title'];
+			$count                = 0;
+			foreach ( $content_data['formContentData'] as $row ) { // Row.
+				foreach ( $row['cells'] as $cell ) { // Column.
+					$percent_width = intval( $cell['width'] );
+					$column_width  = round( $percent_width / 100.0 * 12 ); // 12 column layout.
+					foreach ( $cell['fields'] as $field ) { // Individual field.
+						$spans[ $field ] = $column_width;
+					}
+					$count += count( $cell['fields'] );
+				}
+			}
+			$order += $count;
+		}
+		return $spans;
+	}
+	
+	/**
 	 * The main method to craete a gravity form out of the export data.
 	 * 
 	 * @param array $form_export The export array from Ninja forms.
@@ -105,24 +133,8 @@ class Ninja_Forms {
 			}
 		}
 
-		$order     = 0;
 		$page_data = []; // Stores the index of first item in a page and the page title.
-		$spans     = []; // Calculate width of each field.
-		foreach ( $form_export['settings']['formContentData'] as $content_data ) {
-			$page_data [ $order ] = $content_data['title'];
-			$count                = 0;
-			foreach ( $content_data['formContentData'] as $row ) { // Row.
-				foreach ( $row['cells'] as $cell ) { // Column.
-					$percent_width = intval( $cell['width'] );
-					$column_width  = round( $percent_width / 100.0 * 12 );
-					foreach ( $cell['fields'] as $field ) { // Individual field.
-						$spans[ $field ] = $column_width;
-					}
-					$count += count( $cell['fields'] );
-				}
-			}
-			$order += $count;
-		}
+		$spans     = self::calculate_field_widths( $form_export );
 
 		foreach ( $form_export['fields'] as $order => $nf_field ) {
 
@@ -146,6 +158,7 @@ class Ninja_Forms {
 
 				$gravity_form['fields'][] = $gf_field;
 			}
+
 			self::$mapping[ $nf_field['key'] ] = [
 				'order' => $order,
 				'field' => $nf_field,
@@ -229,6 +242,8 @@ class Ninja_Forms {
 		$gravity_form['confirmations'] = [];
 		$gravity_form['notifications'] = [];
 		$webhooks                      = [];
+
+		//  Process and migrate all ninja form actions.
 		foreach ( $actions as $action ) {
 			if ( 'redirect' === $action['type'] ) {
 				$gravity_form['confirmations'][] = [
@@ -461,7 +476,7 @@ class Ninja_Forms {
 			$start_index = strpos( $text, '{field:', 0 ) + strlen( '{field:' );
 			$end_index   = strpos( $text, '}', $start_index );
 			$field_name  = substr( $text, $start_index, $end_index - $start_index );
-			$replacement = self::convert_ninja_field_to_gf( $field_name );
+			$replacement = self::convert_field_merge_tag( $field_name );
 			$text        = preg_replace( '/{field:[0-9a-zA-Z_]*}/', $replacement, $text, 1 );
 		}
 
@@ -480,7 +495,7 @@ class Ninja_Forms {
 	 * 
 	 * @return string The converted placeholder. 
 	 */
-	public static function convert_ninja_field_to_gf( $field ) {
+	public static function convert_field_merge_tag( $field ) {
 		$field    = self::$mapping[ $field ];
 		$gf_field = sprintf( '{%s:%s}', $field['field']['label'], $field['order'] );
 		return $gf_field;
