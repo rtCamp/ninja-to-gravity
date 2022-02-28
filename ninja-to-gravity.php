@@ -93,8 +93,6 @@ function add_ninja_form_option() {
 					'</a>'
 				);
 				GFCommon::add_error_message( $error_message );
-			} elseif ( '-1' == $count ) {
-				GFCommon::add_error_message( esc_html__( 'Forms could not be imported. Your export file is not compatible with your current version of Gravity Forms.', 'ninja-to-gravity' ) );
 			} else {
 				$form_text = 1 < $count ? esc_html__( 'forms', 'ninja-to-gravity' ) : esc_html__( 'form', 'ninja-to-gravity' );
 				$edit_link = 1 === $count ? "<a href='admin.php?page=gf_edit_forms&id={$forms[0]['id']}'>" . esc_html__( 'Edit Form', 'ninja-to-gravity' ) . '</a>' : '';

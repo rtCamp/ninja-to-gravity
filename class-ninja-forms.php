@@ -25,6 +25,13 @@ class Ninja_Forms {
 	private static $mapping = [];
 
 	/**
+	 * The mapping from Ninja form key to Ninja form field.
+	 * 
+	 * @var array $mapping
+	 */
+	private static $next_available_index = 1;
+
+	/**
 	 * Get all the Ninja forms present in the site and return them.
 	 * 
 	 * @return array Returns a list of forms.
@@ -42,6 +49,25 @@ class Ninja_Forms {
 		}
 
 		return $forms;
+	}
+
+
+	public static function add_field( &$form, $field_args, $field_key = '' ) {
+		
+		$field_args['id'] = self::$next_available_index;
+
+		if ( '' !== $field_key ) {
+			self::$mapping[ $field_key ] = [
+				'order' => self::$next_available_index,
+				'field' => $field_args['label'] ?? '',
+			];
+		}
+
+		self::$next_available_index++;
+		
+		$gf_field = \GF_Fields::create( $field_args );
+	
+		$form['fields'][] = $gf_field;
 	}
 
 	/**
@@ -92,11 +118,8 @@ class Ninja_Forms {
 	 * @return array The mapping from field ID to the width.
 	 */
 	public static function calculate_field_widths( $form_export ) {
-		$order = 0;
 		$spans = [];
 		foreach ( $form_export['settings']['formContentData'] as $content_data ) {
-			$page_data[ $order ] = $content_data['title'];
-			$count                = 0;
 			foreach ( $content_data['formContentData'] as $row ) { // Row.
 				foreach ( $row['cells'] as $cell ) { // Column.
 					$percent_width = intval( $cell['width'] );
@@ -104,12 +127,33 @@ class Ninja_Forms {
 					foreach ( $cell['fields'] as $field ) { // Individual field.
 						$spans[ $field ] = $column_width;
 					}
+				}
+			}
+		}
+		return $spans;
+	}
+
+	/**
+	 * Stores the index of first item in a page and the page title.
+	 * 
+	 * @param array $form_export The form data.
+	 * 
+	 * @return array The mapping from index to the page title.
+	 */
+	public static function get_page_titles_and_indexes( $form_export ) {
+		$page_data = [];
+		$order     = 0;
+		foreach ( $form_export['settings']['formContentData'] as $content_data ) {
+			$page_data[ $order ] = $content_data['title'];
+			$count               = 0;
+			foreach ( $content_data['formContentData'] as $row ) { // Row.
+				foreach ( $row['cells'] as $cell ) { // Column.
 					$count += count( $cell['fields'] );
 				}
 			}
 			$order += $count;
 		}
-		return $spans;
+		return $page_data;
 	}
 	
 	/**
@@ -133,20 +177,18 @@ class Ninja_Forms {
 			}
 		}
 
-		$page_data = []; // Stores the index of first item in a page and the page title.
+		$page_data = self::get_page_titles_and_indexes( $form_export ); // Stores the index of first item in a page and the page title.
 		$spans     = self::calculate_field_widths( $form_export );
 
 		foreach ( $form_export['fields'] as $order => $nf_field ) {
 
-			if ( 1 < count( $page_data ) && in_array( $order, array_keys( $page_data ) ) ) { // More than 1 parts, means it's a multi step form.
+			if ( 1 < count( $page_data ) && in_array( $order, array_keys( $page_data ), true ) ) { // More than 1 parts, means it's a multi step form.
 				if ( 0 !== $order ) {
 					$arguments = [
 						'type' => 'page',
 					];
 	
-					$gf_field = \GF_Fields::create( $arguments );
-	
-					$gravity_form['fields'][] = $gf_field;
+					self::add_field( $gravity_form, $arguments );
 				}
 				
 				$arguments = [
@@ -154,15 +196,9 @@ class Ninja_Forms {
 					'label' => $page_data[ $order ],
 				];
 
-				$gf_field = \GF_Fields::create( $arguments );
-
-				$gravity_form['fields'][] = $gf_field;
+				self::add_field( $gravity_form, $arguments );
 			}
 
-			self::$mapping[ $nf_field['key'] ] = [
-				'order' => $order,
-				'field' => $nf_field,
-			];
 
 			$type = self::field_mapping( $nf_field['type'] );
 
@@ -184,16 +220,10 @@ class Ninja_Forms {
 			];
 
 			$is_required = $nf_field['required'] ?? '';
-			
-			if ( 'zip_1553629856503' === $nf_field['key'] ) {
-				$gravity_form['form_enable_qid_lookup'] = '1';
-				array_push( $css_classes, 'lookupselector' );
-			}
 
 			$arguments = [
 				'type'                 => $type,
 				'layoutGridColumnSpan' => $spans[ $nf_field['key'] ],
-				'id'                   => ( $order + 1 ),
 				'isRequired'           => ( '1' === $is_required || 1 === $is_required ),
 				'placeholder'          => $nf_field['placeholder'] ?? '',
 				'cssClass'             => implode( ' ', $css_classes ),
@@ -203,7 +233,7 @@ class Ninja_Forms {
 				$arguments['label'] = $nf_field['label'];
 			}
 
-			if ( in_array( $type, [ 'checkbox', 'select', 'multiselect', 'radio' ] ) ) {
+			if ( in_array( $type, [ 'checkbox', 'select', 'multiselect', 'radio' ], true ) ) {
 				$arguments = self::process_options( $nf_field, $arguments );
 			}
 
@@ -214,10 +244,11 @@ class Ninja_Forms {
 			$default = $nf_field['default'] ?? '';
 
 			if ( false !== strpos( $default, '{querystring:' ) ) {
-				$default = str_replace( [ '{querystring:', '}' ], '', $default );
 				
 				$arguments['allowsPrepopulate'] = true;
-				$arguments['inputName']         = $default;
+				$arguments['inputName']         = str_replace( [ '{querystring:', '}' ], '', $default );
+				$default                        = '';
+
 			}
 			
 			$default = self::convert_merge_tags( $default );
@@ -231,20 +262,16 @@ class Ninja_Forms {
 
 			$arguments['defaultValue'] = $default;
 
-			$gf_field = \GF_Fields::create( $arguments );
-
-			$gravity_form['fields'][] = $gf_field;
+			self::add_field( $gravity_form, $arguments, $nf_field['key'] );
 
 		}
-
-		$actions = $form_export['actions'];
 
 		$gravity_form['confirmations'] = [];
 		$gravity_form['notifications'] = [];
 		$webhooks                      = [];
 
-		//  Process and migrate all ninja form actions.
-		foreach ( $actions as $action ) {
+		// Process and migrate all ninja form actions.
+		foreach ( $form_export['actions'] as $action ) {
 			if ( 'redirect' === $action['type'] ) {
 				$gravity_form['confirmations'][] = [
 					'id'   => wp_generate_uuid4(),
@@ -311,9 +338,9 @@ class Ninja_Forms {
 
 		$form_id = GFAPI::add_form( $gravity_form );
 		
-		$webhook = new GF_Webhooks();
-		foreach ( $webhooks as $meta ) {
-			$webhook->insert_feed( $form_id, true, $meta );
+		$webhook_handler = new GF_Webhooks();
+		foreach ( $webhooks as $webhook ) {
+			$webhook_handler->insert_feed( $form_id, true, $webhook );
 		}
 		
 		if ( empty( $form_id ) ) {
@@ -352,7 +379,7 @@ class Ninja_Forms {
 	 */
 	public static function process_options( $field, $arguments ) {
 		$options       = $field['options'] ?? [];
-		$field_id      = $arguments['id'];
+		$field_id      = self::$next_available_index;
 		$new_arguments = [];
 
 		if ( ! empty( $options ) ) {
@@ -418,6 +445,7 @@ class Ninja_Forms {
 			'date'            => 'date',
 			'email'           => 'email',
 			'firstname'       => 'text',
+			'file_upload'     => 'fileupload',
 			'html'            => 'html',
 			'hidden'          => 'hidden',
 			'lastname'        => 'text',
@@ -497,7 +525,7 @@ class Ninja_Forms {
 	 */
 	public static function convert_field_merge_tag( $field ) {
 		$field    = self::$mapping[ $field ];
-		$gf_field = sprintf( '{%s:%s}', $field['field']['label'], $field['order'] );
+		$gf_field = sprintf( '{%s:%s}', $field['field'], $field['order'] );
 		return $gf_field;
 	}
 
