@@ -22,7 +22,7 @@ Guidelines for bug reports:
 
 2. **Use the [GitHub issue search](https://github.com/rtCamp/ninja-to-gravity/search?type=Issues)** &mdash; Someone might already know about it, so please check if the issue has already been reported.
 
-3. **Isolate the problem** &mdash; The better you can determine exactly what behavior(s) cause the issue, the faster and more effectively it can be resolved. "I'm getting an error message." is not a good bug report. A good bug report shouldn't leave others needing to contact you for more information.
+3. **Isolate the problem** &mdash; The better you can determine exactly what behavior(s) cause the issue, the faster and more effectively it can be resolved. "I'm getting an error message." is not a good bug report. A good bug report shouldn't leave others needing to contact you for more information.
 
 Please try to be as detailed as possible in your report. What is your environment? What steps will reproduce the issue? What browser(s) experience the problem? What outcome did you expect, and how did it differ from what you actually saw? All these details will help people to fix any potential bugs.
 
