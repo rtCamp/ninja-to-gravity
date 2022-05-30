@@ -4,7 +4,13 @@ Migrate from Ninja forms to Gravity forms.
 
 ## Description
 
-This is a WordPress plugin that allows you to migrate your forms from Ninja Forms to Gravity Forms.
+This is a WordPress plugin that allows you to migrate your forms from Ninja Forms to Gravity Forms. It allows you to import the Ninja form (.nff file) into Gravity form.
+
+We built this considering use cases specific to our client. Both Ninja form & Gravity form has many add-ons. Our solution handles the migration of core ninja form and provides partial support for migrating the settings for the following Ninja form add-ons:
+
+- Ninja Forms - File Uploads
+- Ninja Forms - Multi-Part Forms
+- Ninja Forms - Webhooks
 
 ## Contribution
 
