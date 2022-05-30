@@ -12,11 +12,27 @@ We built this considering use cases specific to our client. Both Ninja form & Gr
 - Ninja Forms - Multi-Part Forms
 - Ninja Forms - Webhooks
 
+## Features
+This plugin adds a "Import Ninja Form" option inside Gravity Form's Import/Export menu in WordPress Dashboard.
+
+1. You can import one form at a time using "Select Form" dropdown field.
+
+- #### Prerequisite 
+  Activate "Ninja Forms" Plugin to view this field. 
+
+  ![image](https://user-images.githubusercontent.com/47940584/170950141-f3f175c5-4fb8-4b15-8626-1bb6a2893071.png)
+
+
+2. You can do bulk import by uploading multiple Ninja form (.nff) files using "Select Files" upload field.
+
+   ![image](https://user-images.githubusercontent.com/47940584/170950401-7d80cb32-6b37-48cc-94fa-3a04c6b6d598.png)
+
+
 ## Contribution
 
 Issues and Pull Requests are welcome, read [CONTRIBUTING.md](CONTRIBUTING.md) for more.
 
-### Contributors
+#### Contributors
 
 * [Dishit Pala](https://github.com/vijayaraghavanm)
 * [Vijayaraghavan M](https://github.com/dishitpala)
