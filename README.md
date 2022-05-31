@@ -34,8 +34,8 @@ Issues and Pull Requests are welcome, read [CONTRIBUTING.md](CONTRIBUTING.md) fo
 
 #### Contributors
 
-* [Dishit Pala](https://github.com/vijayaraghavanm)
-* [Vijayaraghavan M](https://github.com/dishitpala)
+* [Dishit Pala](https://github.com/dishitpala)
+* [Vijayaraghavan M](https://github.com/vijayaraghavanm)
 
 ## Does this interest you?
 
