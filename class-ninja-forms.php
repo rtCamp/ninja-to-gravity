@@ -338,9 +338,11 @@ class Ninja_Forms {
 
 		$form_id = GFAPI::add_form( $gravity_form );
 		
-		$webhook_handler = new GF_Webhooks();
-		foreach ( $webhooks as $webhook ) {
-			$webhook_handler->insert_feed( $form_id, true, $webhook );
+		if ( class_exists('GF_Webhooks') ) {
+			$webhook_handler = new GF_Webhooks();
+			foreach ( $webhooks as $webhook ) {
+				$webhook_handler->insert_feed( $form_id, true, $webhook );
+			}
 		}
 		
 		if ( empty( $form_id ) ) {
