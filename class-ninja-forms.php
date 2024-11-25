@@ -22,7 +22,7 @@ class Ninja_Forms {
 	 * 
 	 * @var array $mapping
 	 */
-	private static $mapping = [];
+	private static $mapping = array();
 
 	/**
 	 * The mapping from Ninja form key to Ninja form field.
@@ -38,10 +38,10 @@ class Ninja_Forms {
 	 */
 	public static function get_forms() {
 
-		$forms = [];
+		$forms = array();
 
 		if ( ! function_exists( 'Ninja_Forms' ) ) {
-			return [];
+			return array();
 		}
 
 		foreach ( Ninja_Forms()->form()->get_forms() as $form ) {
@@ -51,19 +51,30 @@ class Ninja_Forms {
 		return $forms;
 	}
 
-
+	/**
+	 * Adds a new field to a Gravity Forms form.
+	 *
+	 * This method initializes a new field using the provided arguments and appends it to the form.
+	 * It also updates the mapping for the field key if provided.
+	 *
+	 * @param array  &$form       The form to which the new field will be added. This parameter is passed by reference.
+	 * @param array  $field_args  An associative array containing the field properties. Example keys: 'type', 'label', 'choices', etc.
+	 * @param string $field_key  (Optional) A unique key for the field, used to maintain a mapping of field keys to field data.
+	 *
+	 * @return void
+	 */
 	public static function add_field( &$form, $field_args, $field_key = '' ) {
 		
 		$field_args['id'] = self::$next_available_index;
 
 		if ( '' !== $field_key ) {
-			self::$mapping[ $field_key ] = [
+			self::$mapping[ $field_key ] = array(
 				'order' => self::$next_available_index,
 				'field' => $field_args['label'] ?? '',
-			];
+			);
 		}
 
-		self::$next_available_index++;
+		++self::$next_available_index;
 		
 		$gf_field = \GF_Fields::create( $field_args );
 	
@@ -118,7 +129,7 @@ class Ninja_Forms {
 	 * @return array The mapping from field ID to the width.
 	 */
 	public static function calculate_field_widths( $form_export ) {
-		$spans = [];
+		$spans = array();
 		foreach ( $form_export['settings']['formContentData'] as $content_data ) {
 			foreach ( $content_data['formContentData'] as $row ) { // Row.
 				foreach ( $row['cells'] as $cell ) { // Column.
@@ -141,7 +152,7 @@ class Ninja_Forms {
 	 * @return array The mapping from index to the page title.
 	 */
 	public static function get_page_titles_and_indexes( $form_export ) {
-		$page_data = [];
+		$page_data = array();
 		$order     = 0;
 		foreach ( $form_export['settings']['formContentData'] as $content_data ) {
 			$page_data[ $order ] = $content_data['title'];
@@ -165,12 +176,12 @@ class Ninja_Forms {
 	 */
 	public static function convert_to_gravity_form( $form_export ) {
 
-		$gravity_form = [];
+		$gravity_form = array();
 
 		$gravity_form['title'] = $form_export['settings']['title'];
 
-		$defaults   = [];
-		$conditions = $form_export['settings']['conditions'] ?? [];
+		$defaults   = array();
+		$conditions = $form_export['settings']['conditions'] ?? array();
 		foreach ( $conditions as $condition ) {
 			if ( self::can_condition_be_converted_to_default_value( $condition ) ) {
 				$defaults[ $condition['when'][0]['key'] ] = $condition['then'][0]['value'];
@@ -184,17 +195,17 @@ class Ninja_Forms {
 
 			if ( 1 < count( $page_data ) && in_array( $order, array_keys( $page_data ), true ) ) { // More than 1 parts, means it's a multi step form.
 				if ( 0 !== $order ) {
-					$arguments = [
+					$arguments = array(
 						'type' => 'page',
-					];
+					);
 	
 					self::add_field( $gravity_form, $arguments );
 				}
 				
-				$arguments = [
+				$arguments = array(
 					'type'  => 'section',
 					'label' => $page_data[ $order ],
-				];
+				);
 
 				self::add_field( $gravity_form, $arguments );
 			}
@@ -207,33 +218,33 @@ class Ninja_Forms {
 			}
 
 			if ( 'submit' === $type ) {
-				$gravity_form['button'] = [
+				$gravity_form['button'] = array(
 					'type'     => 'text',
 					'text'     => $nf_field['label'],
 					'imageUrl' => '',
-				];
+				);
 				continue;
 			}
 			
-			$css_classes = [
+			$css_classes = array(
 				sprintf( '%s-field', $type ),
-			];
+			);
 
 			$is_required = $nf_field['required'] ?? '';
 
-			$arguments = [
+			$arguments = array(
 				'type'                 => $type,
 				'layoutGridColumnSpan' => $spans[ $nf_field['key'] ],
 				'isRequired'           => ( '1' === $is_required || 1 === $is_required ),
 				'placeholder'          => $nf_field['placeholder'] ?? '',
 				'cssClass'             => implode( ' ', $css_classes ),
-			];
+			);
 			
 			if ( 'section' !== $type ) {
 				$arguments['label'] = $nf_field['label'];
 			}
 
-			if ( in_array( $type, [ 'checkbox', 'select', 'multiselect', 'radio' ], true ) ) {
+			if ( in_array( $type, array( 'checkbox', 'select', 'multiselect', 'radio' ), true ) ) {
 				$arguments = self::process_options( $nf_field, $arguments );
 			}
 
@@ -246,7 +257,7 @@ class Ninja_Forms {
 			if ( false !== strpos( $default, '{querystring:' ) ) {
 				
 				$arguments['allowsPrepopulate'] = true;
-				$arguments['inputName']         = str_replace( [ '{querystring:', '}' ], '', $default );
+				$arguments['inputName']         = str_replace( array( '{querystring:', '}' ), '', $default );
 				$default                        = '';
 
 			}
@@ -266,25 +277,25 @@ class Ninja_Forms {
 
 		}
 
-		$gravity_form['confirmations'] = [];
-		$gravity_form['notifications'] = [];
-		$webhooks                      = [];
+		$gravity_form['confirmations'] = array();
+		$gravity_form['notifications'] = array();
+		$webhooks                      = array();
 
 		// Process and migrate all ninja form actions.
 		foreach ( $form_export['actions'] as $action ) {
 			if ( 'redirect' === $action['type'] ) {
-				$gravity_form['confirmations'][] = [
+				$gravity_form['confirmations'][] = array(
 					'id'   => wp_generate_uuid4(),
 					'name' => $action['label'],
 					'type' => 'redirect',
 					'url'  => self::maybe_prepend_base_url( $action['redirect_url'] ),
-				];
+				);
 			} elseif ( 'email' === $action['type'] ) {
 				$from_address = ! empty( $action['from_address'] ) ? $action['from_address'] : '{admin_email}';
 				$reply_to     = ! empty( $action['reply_to'] ) ? $action['reply_to'] : '{admin_email}';
 				$from_address = self::convert_merge_tags( $from_address );
 				$reply_to     = self::convert_merge_tags( $reply_to );
-				$notification = [
+				$notification = array(
 					'id'                => wp_generate_uuid4(),
 					'isActive'          => ( '1' === $action['active'] ),
 					'name'              => $action['label'],
@@ -300,8 +311,8 @@ class Ninja_Forms {
 					'replyTo'           => $reply_to,
 					'disableAutoformat' => false,
 					'enableAttachments' => false,
-				];
-				$matches      = [];
+				);
+				$matches      = array();
 				$to_email     = self::convert_merge_tags( $action['to'] );
 				preg_match( '/{.*:(\d+)}/', $to_email, $matches );
 
@@ -314,21 +325,21 @@ class Ninja_Forms {
 				}
 				$gravity_form['notifications'][] = $notification; 
 			} elseif ( 'webhooks' === $action['type'] ) {
-				$meta = [
+				$meta = array(
 					'feedName'        => $action['label'],
 					'requestURL'      => $action['wh-remote-url'],
 					'requestMethod'   => strtoupper( $action['wh-remote-method'] ),
 					'requestFormat'   => 'form',
 					'requestBodyType' => 'select_fields',
-					'fieldValues'     => [],
-				];
+					'fieldValues'     => array(),
+				);
 				foreach ( $action['wh-args'] as $field ) {
-					$gf_field = [
+					$gf_field = array(
 						'key'          => 'gf_custom',
 						'value'        => 'gf_custom',
 						'custom_key'   => $field['key'],
 						'custom_value' => self::convert_merge_tags( $field['value'] ),
-					];
+					);
 
 					$meta['fieldValues'][] = $gf_field;
 				}
@@ -348,7 +359,6 @@ class Ninja_Forms {
 		}
 
 		return $form_id;
-
 	}
 
 	/**
@@ -378,45 +388,45 @@ class Ninja_Forms {
 	 * @return array The modified array of arguments.
 	 */
 	public static function process_options( $field, $arguments ) {
-		$options       = $field['options'] ?? [];
+		$options       = $field['options'] ?? array();
 		$field_id      = self::$next_available_index;
-		$new_arguments = [];
+		$new_arguments = array();
 
 		if ( ! empty( $options ) ) {
-			$choices = [];
+			$choices = array();
 			foreach ( $options as $option ) {
 				array_push(
 					$choices,
-					[
+					array(
 						'text'       => $option['label'],
 						'value'      => $option['value'],
 						'isSelected' => ( '1' === ( $option['selected'] ?? '' ) ),
-					]
+					)
 				);
 			}
 			$new_arguments['choices'] = $choices;
 		} else {
 			$new_arguments['labelPlacement'] = 'hidden_label';
-			$new_arguments['choices']        = [
-				[
+			$new_arguments['choices']        = array(
+				array(
 					'text'       => $field['label'],
 					'value'      => $field['key'],
 					'isSelected' => 'unchecked' !== $field['default_value'],
-				],
-			];
+				),
+			);
 		}
 
 		// Set inputs key if the field is checkbox.
 		if ( 'checkbox' === $arguments['type'] ) {
-			$inputs = [];
+			$inputs = array();
 			foreach ( $new_arguments['choices'] as $index => $choice ) {
 				array_push(
 					$inputs,
-					[
+					array(
 						'id'    => $field_id . '.' . ( $index + 1 ),
 						'label' => $choice['text'],
 						'name'  => '',
-					]
+					)
 				);
 			}
 			$new_arguments['inputs']            = $inputs;
@@ -435,7 +445,7 @@ class Ninja_Forms {
 	 */
 	public static function field_mapping( $nf_field = null ) {
 
-		$mapping = [
+		$mapping = array(
 			'address'         => 'text',
 			'address2'        => 'text',
 			'button'          => null,
@@ -477,7 +487,7 @@ class Ninja_Forms {
 			'unknown'         => null,
 			'zip'             => 'text',
 			'hr'              => 'section',
-		];
+		);
 
 		if ( empty( $nf_field ) ) {
 			return $mapping;
@@ -488,7 +498,6 @@ class Ninja_Forms {
 		}
 
 		return $mapping[ $nf_field ];
-
 	}
 
 	/**
@@ -528,5 +537,4 @@ class Ninja_Forms {
 		$gf_field = sprintf( '{%s:%s}', $field['field'], $field['order'] );
 		return $gf_field;
 	}
-
 }

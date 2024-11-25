@@ -48,7 +48,6 @@ function add_import_from_ninja_forms_tab( $setting_tabs ) {
 	}
 
 	return $setting_tabs;
-
 } 
 
 add_filter( 'gform_export_menu', 'add_import_from_ninja_forms_tab' );
@@ -80,8 +79,8 @@ function add_ninja_form_option() {
 				$form   = \Ninja2Gravity\Ninja_Forms::convert_to_gravity_form( $export );
 
 				if ( ! empty( $form ) ) {
-					$count ++;
-					$forms[] = [ 'id' => $form ];
+					++$count;
+					$forms[] = array( 'id' => $form );
 				}
 			}
 
@@ -121,7 +120,7 @@ function add_ninja_form_option() {
 	}
 	GFExport::page_header();
 
-	$ninja_forms = [];
+	$ninja_forms = array();
 	if ( function_exists( 'Ninja_Forms' ) ) {
 		$ninja_forms = Ninja_Forms()->form()->get_forms();
 	}
@@ -129,8 +128,6 @@ function add_ninja_form_option() {
 	include NINJA_TO_GRAVITY_TEMPLATES_PATH . DIRECTORY_SEPARATOR . 'import-form.php';
 
 	GFExport::page_footer();
-
 }
 
 add_action( 'gform_export_page_import_ninja_form', 'add_ninja_form_option' );
-
