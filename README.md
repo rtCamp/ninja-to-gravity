@@ -22,8 +22,11 @@ This plugin adds a "Import Ninja Form" option inside Gravity Form's Import/Expor
 
   ![image](https://user-images.githubusercontent.com/47940584/170950141-f3f175c5-4fb8-4b15-8626-1bb6a2893071.png)
 
+2. Install and activate the **WebHooks Add-On** plugin from the Gravity Forms add-on menu
 
-2. You can do bulk import by uploading multiple Ninja form (.nff) files using "Select Files" upload field.
+   ![image](https://github.com/user-attachments/assets/1fd4e311-242a-4891-aee6-b1b693ca2d8b)
+
+3. You can do bulk import by uploading multiple Ninja form (.nff) files using "Select Files" upload field.
 
    ![image](https://user-images.githubusercontent.com/47940584/170950401-7d80cb32-6b37-48cc-94fa-3a04c6b6d598.png)
 
