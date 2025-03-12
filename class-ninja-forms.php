@@ -125,11 +125,33 @@ class Ninja_Forms
     public static function calculate_field_widths( $form_export )
     {
         $spans = [];
+        
+        // Check if formContentData exists and is an array.
+        if (!isset($form_export['settings']['formContentData']) || !is_array($form_export['settings']['formContentData'])) {
+            return $spans; // Return empty spans array if no valid data.
+        }
+        
         foreach ( $form_export['settings']['formContentData'] as $content_data ) {
+            // Check if content_data is an array and has formContentData.
+            if (!is_array($content_data) || !isset($content_data['formContentData']) || !is_array($content_data['formContentData'])) {
+                continue;
+            }
+            
             foreach ( $content_data['formContentData'] as $row ) { // Row.
+                // Check if row is an array and has cells.
+                if (!is_array($row) || !isset($row['cells']) || !is_array($row['cells'])) {
+                    continue;
+                }
+                
                 foreach ( $row['cells'] as $cell ) { // Column.
+                    // Check if cell is an array and has width and fields.
+                    if (!is_array($cell) || !isset($cell['width']) || !isset($cell['fields']) || !is_array($cell['fields'])) {
+                        continue;
+                    }
+                    
                     $percent_width = intval($cell['width']);
                     $column_width  = round($percent_width / 100.0 * 12); // 12 column layout.
+                    
                     foreach ( $cell['fields'] as $field ) { // Individual field.
                         $spans[ $field ] = $column_width;
                     }
@@ -151,13 +173,36 @@ class Ninja_Forms
         $page_data = [];
         $order     = 0;
         foreach ( $form_export['settings']['formContentData'] as $content_data ) {
-            $page_data[ $order ] = $content_data['title'];
-            $count               = 0;
-            foreach ( $content_data['formContentData'] as $row ) { // Row.
-                foreach ( $row['cells'] as $cell ) { // Column.
-                    $count += count($cell['fields']);
+            // Add type checking.
+            if (!is_array($content_data)) {
+                continue; 
+            }
+            
+            if (!isset($content_data['label'])) {
+                // Use a default label or skip this item.
+                $label = 'Page ' . ($order + 1);
+            } else {
+                $label = $content_data['label'];
+            }
+            
+            $page_data[ $order ] = $label;
+            $count = 0;
+            
+            // Make sure 'formContentData' exists and is an array.
+            if (isset($content_data['formContentData']) && is_array($content_data['formContentData'])) {
+                foreach ( $content_data['formContentData'] as $row ) {
+                    // Make sure 'cells' exists and is an array.
+                    if (isset($row['cells']) && is_array($row['cells'])) {
+                        foreach ( $row['cells'] as $cell ) {
+                            // Make sure 'fields' exists and is an array.
+                            if (isset($cell['fields']) && is_array($cell['fields'])) {
+                                $count += count($cell['fields']);
+                            }
+                        }
+                    }
                 }
             }
+            
             $order += $count;
         }
         return $page_data;
@@ -172,6 +217,9 @@ class Ninja_Forms
      */
     public static function convert_to_gravity_form( $form_export )
     {
+
+        self::$mapping = [];
+        self::$next_available_index = 1;
 
         $gravity_form = [];
 
@@ -231,7 +279,7 @@ class Ninja_Forms
 
             $arguments = [
             'type'                 => $type,
-            'layoutGridColumnSpan' => $spans[ $nf_field['key'] ],
+            'layoutGridColumnSpan' => isset($spans[ $nf_field['key'] ]) ? $spans[ $nf_field['key'] ] : 12, // Default to full width
             'isRequired'           => ( '1' === $is_required || 1 === $is_required ),
             'placeholder'          => $nf_field['placeholder'] ?? '',
             'cssClass'             => implode(' ', $css_classes),
